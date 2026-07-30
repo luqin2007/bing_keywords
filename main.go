@@ -18,18 +18,20 @@ import (
 )
 
 type Config struct {
-	Port       int    `json:"port"`
-	DBPath     string `json:"db_path"`
-	LogFile    string `json:"log_file"`
-	WebhookURL string `json:"webhook_url"`
+	Port        int    `json:"port"`
+	DBPath      string `json:"db_path"`
+	LogFile     string `json:"log_file"`
+	WebhookURL  string `json:"webhook_url"`
+	WebhookHMAC string `json:"webhook_hmac"`
 }
 
 func defaultConfig() Config {
 	return Config{
-		Port:       8080,
-		DBPath:     "/data/keywords.db",
-		LogFile:    "/data/requests.log",
-		WebhookURL: "",
+		Port:        8080,
+		DBPath:      "/data/keywords.db",
+		LogFile:     "/data/requests.log",
+		WebhookURL:  "",
+		WebhookHMAC: "",
 	}
 }
 
@@ -76,6 +78,9 @@ func loadConfig() Config {
 	if fileCfg.WebhookURL != "" {
 		cfg.WebhookURL = fileCfg.WebhookURL
 	}
+	if fileCfg.WebhookHMAC != "" {
+		cfg.WebhookHMAC = fileCfg.WebhookHMAC
+	}
 
 	return cfg
 }
@@ -83,8 +88,8 @@ func loadConfig() Config {
 func main() {
 	cfg := loadConfig()
 
-	log.Printf("[config] port=%d, db=%s, log=%s, webhook=%s",
-		cfg.Port, cfg.DBPath, cfg.LogFile, cfg.WebhookURL)
+	log.Printf("[config] port=%d, db=%s, log=%s, webhook=%s, hmac=%v",
+		cfg.Port, cfg.DBPath, cfg.LogFile, cfg.WebhookURL, cfg.WebhookHMAC != "")
 
 	database, err := db.Open(cfg.DBPath)
 	if err != nil {
@@ -96,7 +101,7 @@ func main() {
 	logger := logger.New(cfg.LogFile)
 	defer logger.Close()
 
-	notifier := notifier.New(cfg.WebhookURL)
+	notifier := notifier.New(cfg.WebhookURL, cfg.WebhookHMAC)
 
 	col := collector.New(database)
 

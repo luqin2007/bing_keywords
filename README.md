@@ -59,8 +59,12 @@ curl "http://localhost:8080/api/keywords?count=5"
   "port": 8080,
   "db_path": "/data/keywords.db",
   "log_file": "/data/requests.log",
-  "webhook_url": ""
+  "webhook_url": "",
+  "webhook_hmac": ""
 }
+```
+
+webhook 请求会携带 `X-Signature-256` 头，值为 `sha256=<HMAC-SHA256 hex>`，接收方可用相同密钥验证签名。
 ```
 
 ## 技术栈
