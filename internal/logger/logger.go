@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -48,6 +49,10 @@ func (l *Logger) Close() {
 	}
 }
 
+func (l *Logger) FilePath() string {
+	return l.filePath
+}
+
 func (l *Logger) Write(entry LogEntry) {
 	entry.Time = time.Now().Format(time.RFC3339)
 	data, _ := json.Marshal(entry)
@@ -60,4 +65,66 @@ func (l *Logger) Write(entry LogEntry) {
 		defer l.mu.Unlock()
 		l.file.WriteString(line + "\n")
 	}
+}
+
+type LogPage struct {
+	Entries []LogEntry `json:"entries"`
+	Total   int        `json:"total"`
+	Page    int        `json:"page"`
+	Size    int        `json:"size"`
+}
+
+func (l *Logger) ReadLogs(page, size int, statusFilter string) (*LogPage, error) {
+	if !l.enabled || l.filePath == "" {
+		return &LogPage{Entries: []LogEntry{}, Total: 0, Page: page, Size: size}, nil
+	}
+
+	f, err := os.Open(l.filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	var allEntries []LogEntry
+	scanner := bufio.NewScanner(f)
+	scanner.Buffer(make([]byte, 0, 64*1024), 512*1024)
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if len(line) == 0 {
+			continue
+		}
+		var entry LogEntry
+		if err := json.Unmarshal(line, &entry); err != nil {
+			continue
+		}
+		if statusFilter != "" && entry.Status != statusFilter {
+			continue
+		}
+		allEntries = append(allEntries, entry)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	total := len(allEntries)
+
+	start := total - (page-1)*size
+	if start < 0 {
+		start = 0
+	}
+	end := total - (page-1)*size + size
+	if end > total {
+		end = total
+	}
+	if start >= end {
+		return &LogPage{Entries: []LogEntry{}, Total: total, Page: page, Size: size}, nil
+	}
+
+	entries := make([]LogEntry, 0, end-start)
+	for i := start; i < end; i++ {
+		entries = append(entries, allEntries[total-1-i])
+	}
+
+	return &LogPage{Entries: entries, Total: total, Page: page, Size: size}, nil
 }

@@ -8,11 +8,12 @@ import (
 )
 
 type SourceResult struct {
-	Words []string
-	Err   error
+	Source string
+	Words  []string
+	Err    error
 }
 
-type SourceFunc func() ([]string, error)
+type SourceFunc func() (words []string, source string, err error)
 
 type Collector struct {
 	db      *db.DB
@@ -31,15 +32,15 @@ func New(database *db.DB) *Collector {
 	}
 }
 
-func (c *Collector) Collect(target int) ([]string, []error) {
+func (c *Collector) Collect(target int) ([]SourceResult, []error) {
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	indices := rng.Perm(len(c.sources))
 
 	var allErrors []error
-	var allWords []string
+	var allResults []SourceResult
 
 	for _, idx := range indices {
-		words, err := c.sources[idx]()
+		words, source, err := c.sources[idx]()
 		if err != nil {
 			allErrors = append(allErrors, err)
 			continue
@@ -47,13 +48,13 @@ func (c *Collector) Collect(target int) ([]string, []error) {
 		if len(words) == 0 {
 			continue
 		}
-		inserted, err := c.db.Insert(words)
+		inserted, err := c.db.Insert(words, source)
 		if err != nil {
 			allErrors = append(allErrors, err)
 			continue
 		}
 		if inserted > 0 {
-			allWords = append(allWords, words...)
+			allResults = append(allResults, SourceResult{Source: source, Words: words})
 		}
 		count, _ := c.db.Count()
 		if count >= target {
@@ -61,16 +62,16 @@ func (c *Collector) Collect(target int) ([]string, []error) {
 		}
 	}
 
-	return allWords, allErrors
+	return allResults, allErrors
 }
 
-func (c *Collector) CollectUntil(target int) ([]string, []error) {
+func (c *Collector) CollectUntil(target int) ([]SourceResult, []error) {
 	var allErrors []error
-	var allCollected []string
+	var allResults []SourceResult
 
 	for attempts := 0; attempts < 8; attempts++ {
-		words, errs := c.Collect(target)
-		allCollected = append(allCollected, words...)
+		results, errs := c.Collect(target)
+		allResults = append(allResults, results...)
 		allErrors = append(allErrors, errs...)
 
 		count, _ := c.db.Count()
@@ -80,5 +81,6 @@ func (c *Collector) CollectUntil(target int) ([]string, []error) {
 		time.Sleep(500 * time.Millisecond)
 	}
 
-	return allCollected, allErrors
+	c.db.UpdateLastCollectTime()
+	return allResults, allErrors
 }

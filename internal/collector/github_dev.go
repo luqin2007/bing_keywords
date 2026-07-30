@@ -11,30 +11,31 @@ import (
 	"golang.org/x/net/html"
 )
 
-func FetchGitHubDevelopers() ([]string, error) {
+func FetchGitHubDevelopers() ([]string, string, error) {
 	lang := languages[rand.Intn(len(languages))]
 	url := fmt.Sprintf("https://github.com/trending/developers?since=weekly&spoken_language=%s", lang)
+	source := fmt.Sprintf("github_dev(language:%s)", lang)
 
 	client := &http.Client{Timeout: 15 * time.Second}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("github devs: %w", err)
+		return nil, source, fmt.Errorf("github devs: %w", err)
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0")
 	req.Header.Set("Accept", "text/html")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("github devs: %w", err)
+		return nil, source, fmt.Errorf("github devs: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
-		return nil, fmt.Errorf("github devs: %w", err)
+		return nil, source, fmt.Errorf("github devs: %w", err)
 	}
 
-	return extractGitHubDeveloperNames(string(body)), nil
+	return extractGitHubDeveloperNames(string(body)), source, nil
 }
 
 func extractGitHubDeveloperNames(htmlContent string) []string {

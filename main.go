@@ -23,6 +23,7 @@ type Config struct {
 	LogFile     string `json:"log_file"`
 	WebhookURL  string `json:"webhook_url"`
 	WebhookHMAC string `json:"webhook_hmac"`
+	AdminToken  string `json:"admin_token"`
 }
 
 func defaultConfig() Config {
@@ -32,6 +33,7 @@ func defaultConfig() Config {
 		LogFile:     "/data/requests.log",
 		WebhookURL:  "",
 		WebhookHMAC: "",
+		AdminToken:  "",
 	}
 }
 
@@ -81,6 +83,9 @@ func loadConfig() Config {
 	if fileCfg.WebhookHMAC != "" {
 		cfg.WebhookHMAC = fileCfg.WebhookHMAC
 	}
+	if fileCfg.AdminToken != "" {
+		cfg.AdminToken = fileCfg.AdminToken
+	}
 
 	return cfg
 }
@@ -88,8 +93,8 @@ func loadConfig() Config {
 func main() {
 	cfg := loadConfig()
 
-	log.Printf("[config] port=%d, db=%s, log=%s, webhook=%s, hmac=%v",
-		cfg.Port, cfg.DBPath, cfg.LogFile, cfg.WebhookURL, cfg.WebhookHMAC != "")
+	log.Printf("[config] port=%d, db=%s, log=%s, webhook=%s, hmac=%v, admin_token=%v",
+		cfg.Port, cfg.DBPath, cfg.LogFile, cfg.WebhookURL, cfg.WebhookHMAC != "", cfg.AdminToken != "")
 
 	database, err := db.Open(cfg.DBPath)
 	if err != nil {
@@ -123,9 +128,16 @@ func main() {
 	log.Printf("[cleaner] started, interval=30m")
 
 	h := handler.New(database, col, notifier, logger)
+	admin := handler.NewAdmin(database, col, logger, "/app/config/config.json")
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/keywords", h.ServeHTTP)
+	mux.HandleFunc("/admin", admin.ServeAdmin)
+	mux.HandleFunc("/api/admin/stats", admin.HandleStats)
+	mux.HandleFunc("/api/admin/keywords", admin.HandleKeywords)
+	mux.HandleFunc("/api/admin/logs", admin.HandleLogs)
+	mux.HandleFunc("/api/admin/config", admin.HandleConfig)
+	mux.HandleFunc("/api/admin/collect", admin.HandleCollect)
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	log.Printf("[server] listening on %s", addr)

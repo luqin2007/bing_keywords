@@ -21,31 +21,32 @@ var sourceForgeCategories = []string{
 	"database", "networking", "printing", "religion", "screensavers",
 }
 
-func FetchSourceForge() ([]string, error) {
+func FetchSourceForge() ([]string, string, error) {
 	os := sourceForgeOS[rand.Intn(len(sourceForgeOS))]
 	cat := sourceForgeCategories[rand.Intn(len(sourceForgeCategories))]
 	url := fmt.Sprintf("https://sourceforge.net/directory/os:%s/category:%s/", os, cat)
+	source := fmt.Sprintf("sourceforge(os:%s,category:%s)", os, cat)
 
 	client := &http.Client{Timeout: 15 * time.Second}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("sourceforge: %w", err)
+		return nil, source, fmt.Errorf("sourceforge: %w", err)
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0")
 	req.Header.Set("Accept", "text/html")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("sourceforge: %w", err)
+		return nil, source, fmt.Errorf("sourceforge: %w", err)
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(io.LimitReader(resp.Body, 1 << 20))
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
-		return nil, fmt.Errorf("sourceforge: %w", err)
+		return nil, source, fmt.Errorf("sourceforge: %w", err)
 	}
 
-	return extractSourceForgeAppNames(string(body)), nil
+	return extractSourceForgeAppNames(string(body)), source, nil
 }
 
 func extractSourceForgeAppNames(htmlContent string) []string {

@@ -78,20 +78,19 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if available < threshold {
 		log.Printf("[handler] pool low: available=%d, threshold=%d, collecting...", available, threshold)
-		collected, errs := h.collector.CollectUntil(threshold)
+		_, errs := h.collector.CollectUntil(threshold)
 
 		if len(errs) > 0 {
 			newAvailable, _ := h.db.CountAvailable()
 			if newAvailable < count {
-				sources := []string{"github_repos", "github_devs", "sourceforge", "openrouter"}
+				sourceNames := []string{"github_repos", "github_devs", "sourceforge", "openrouter"}
 				var errMsgs []string
 				for _, e := range errs {
 					errMsgs = append(errMsgs, e.Error())
 				}
-				h.notifier.SendAlert(sources, errMsgs, newAvailable, threshold, lastCnt)
+				h.notifier.SendAlert(sourceNames, errMsgs, newAvailable, threshold, lastCnt)
 			}
 		}
-		_ = collected
 	}
 
 	keywords, err := h.db.PickRandom(count)

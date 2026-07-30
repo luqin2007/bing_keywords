@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -14,6 +15,7 @@ type DB struct {
 type Keyword struct {
 	ID        int64
 	Word      string
+	Source    string
 	CreatedAt int64
 	UsedAt    int64
 }
@@ -40,6 +42,7 @@ func (db *DB) migrate() error {
 		CREATE TABLE IF NOT EXISTS keywords (
 			id         INTEGER PRIMARY KEY AUTOINCREMENT,
 			word       TEXT    NOT NULL UNIQUE,
+			source     TEXT    NOT NULL DEFAULT '',
 			created_at INTEGER NOT NULL,
 			used_at    INTEGER NOT NULL DEFAULT 0
 		);
@@ -50,7 +53,34 @@ func (db *DB) migrate() error {
 			value TEXT NOT NULL
 		);
 	`)
-	return err
+	if err != nil {
+		return err
+	}
+	_, err = db.conn.Exec("ALTER TABLE keywords ADD COLUMN source TEXT NOT NULL DEFAULT ''")
+	if err != nil {
+		if !isColumnExistsErr(err) {
+			return err
+		}
+	}
+	return nil
+}
+
+func isColumnExistsErr(err error) bool {
+	return err != nil && (contains(err.Error(), "duplicate column") ||
+		contains(err.Error(), "already exists"))
+}
+
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && searchString(s, substr)
+}
+
+func searchString(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
 }
 
 func (db *DB) Count() (int, error) {
@@ -59,7 +89,7 @@ func (db *DB) Count() (int, error) {
 	return n, err
 }
 
-func (db *DB) Insert(words []string) (int, error) {
+func (db *DB) Insert(words []string, source string) (int, error) {
 	now := time.Now().Unix()
 	tx, err := db.conn.Begin()
 	if err != nil {
@@ -67,7 +97,7 @@ func (db *DB) Insert(words []string) (int, error) {
 	}
 	defer tx.Rollback()
 
-	stmt, err := tx.Prepare("INSERT OR IGNORE INTO keywords (word, created_at) VALUES (?, ?)")
+	stmt, err := tx.Prepare("INSERT OR IGNORE INTO keywords (word, source, created_at) VALUES (?, ?, ?)")
 	if err != nil {
 		return 0, err
 	}
@@ -78,7 +108,7 @@ func (db *DB) Insert(words []string) (int, error) {
 		if w == "" {
 			continue
 		}
-		res, err := stmt.Exec(w, now)
+		res, err := stmt.Exec(w, source, now)
 		if err != nil {
 			return 0, err
 		}
@@ -98,7 +128,7 @@ func (db *DB) CountAvailable() (int, error) {
 func (db *DB) PickRandom(count int) ([]Keyword, error) {
 	cut := time.Now().Add(-10 * 24 * time.Hour).Unix()
 	rows, err := db.conn.Query(
-		"SELECT id, word, created_at, used_at FROM keywords WHERE used_at = 0 OR used_at < ? ORDER BY RANDOM() LIMIT ?",
+		"SELECT id, word, source, created_at, used_at FROM keywords WHERE used_at = 0 OR used_at < ? ORDER BY RANDOM() LIMIT ?",
 		cut, count,
 	)
 	if err != nil {
@@ -109,7 +139,7 @@ func (db *DB) PickRandom(count int) ([]Keyword, error) {
 	var keywords []Keyword
 	for rows.Next() {
 		var k Keyword
-		if err := rows.Scan(&k.ID, &k.Word, &k.CreatedAt, &k.UsedAt); err != nil {
+		if err := rows.Scan(&k.ID, &k.Word, &k.Source, &k.CreatedAt, &k.UsedAt); err != nil {
 			return nil, err
 		}
 		keywords = append(keywords, k)
@@ -161,4 +191,116 @@ func (db *DB) GetMeta(key string) (string, error) {
 func (db *DB) SetMeta(key, value string) error {
 	_, err := db.conn.Exec("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)", key, value)
 	return err
+}
+
+type Stats struct {
+	Total       int               `json:"total"`
+	Available   int               `json:"available"`
+	UsedToday   int               `json:"used_today"`
+	BySource    map[string]int    `json:"by_source"`
+	LastCollect string            `json:"last_collect"`
+}
+
+func (db *DB) GetStats() (*Stats, error) {
+	total, _ := db.Count()
+	available, _ := db.CountAvailable()
+
+	todayStart := time.Now().Truncate(24 * time.Hour).Unix()
+	var usedToday int
+	db.conn.QueryRow("SELECT COUNT(*) FROM keywords WHERE used_at >= ?", todayStart).Scan(&usedToday)
+
+	rows, err := db.conn.Query("SELECT source, COUNT(*) FROM keywords GROUP BY source ORDER BY COUNT(*) DESC")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	bySource := make(map[string]int)
+	for rows.Next() {
+		var src string
+		var cnt int
+		rows.Scan(&src, &cnt)
+		if src == "" {
+			src = "unknown"
+		}
+		bySource[src] = cnt
+	}
+
+	lastCollect, _ := db.GetMeta("last_collect_time")
+
+	return &Stats{
+		Total:       total,
+		Available:   available,
+		UsedToday:   usedToday,
+		BySource:    bySource,
+		LastCollect: lastCollect,
+	}, nil
+}
+
+type KeywordRow struct {
+	ID        int64  `json:"id"`
+	Word      string `json:"word"`
+	Source    string `json:"source"`
+	CreatedAt int64  `json:"created_at"`
+	UsedAt    int64  `json:"used_at"`
+	Status    string `json:"status"`
+}
+
+func (db *DB) ListKeywords(page, size int, source, status string) ([]KeywordRow, int, error) {
+	where := "1=1"
+	args := []interface{}{}
+
+	if source != "" {
+		where += " AND source LIKE ?"
+		args = append(args, source+"%")
+	}
+
+	cut := time.Now().Add(-10 * 24 * time.Hour).Unix()
+	switch status {
+	case "available":
+		where += " AND (used_at = 0 OR used_at < ?)"
+		args = append(args, cut)
+	case "used":
+		where += " AND used_at >= ?"
+		args = append(args, cut)
+	case "recent":
+		sevenDays := time.Now().Add(-7 * 24 * time.Hour).Unix()
+		where += " AND created_at >= ?"
+		args = append(args, sevenDays)
+	}
+
+	var total int
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM keywords WHERE %s", where)
+	if err := db.conn.QueryRow(countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * size
+	query := fmt.Sprintf("SELECT id, word, source, created_at, used_at FROM keywords WHERE %s ORDER BY created_at DESC LIMIT ? OFFSET ?", where)
+	args = append(args, size, offset)
+
+	rows, err := db.conn.Query(query, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var keywords []KeywordRow
+	for rows.Next() {
+		var k KeywordRow
+		if err := rows.Scan(&k.ID, &k.Word, &k.Source, &k.CreatedAt, &k.UsedAt); err != nil {
+			return nil, 0, err
+		}
+		if k.UsedAt == 0 || k.UsedAt < cut {
+			k.Status = "available"
+		} else {
+			k.Status = "used"
+		}
+		keywords = append(keywords, k)
+	}
+	return keywords, total, rows.Err()
+}
+
+func (db *DB) UpdateLastCollectTime() {
+	db.SetMeta("last_collect_time", time.Now().Format(time.RFC3339))
 }
