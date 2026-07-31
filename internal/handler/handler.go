@@ -83,7 +83,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if len(errs) > 0 {
 			newAvailable, _ := h.db.CountAvailable()
 			if newAvailable < count {
-				sourceNames := []string{"github_repos", "github_devs", "sourceforge", "openrouter"}
+				sourceNames := []string{"github_repos", "github_devs", "sourceforge", "openrouter", "steam", "itch"}
 				var errMsgs []string
 				for _, e := range errs {
 					errMsgs = append(errMsgs, e.Error())

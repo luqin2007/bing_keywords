@@ -28,6 +28,8 @@ func New(database *db.DB) *Collector {
 			FetchGitHubDevelopers,
 			FetchSourceForge,
 			FetchOpenRouterModels,
+			FetchSteamGames,
+			FetchItchGames,
 		},
 	}
 }
