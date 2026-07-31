@@ -11,20 +11,47 @@ import (
 	"golang.org/x/net/html"
 )
 
-var sourceForgeOS = []string{"windows", "linux", "mac", "android", "ios", "bsd"}
+var sourceForgeOS = []string{
+	"windows",
+	"linux",
+	"mac",
+	"bsd",
+	"chromeos",
+	"mobile-operating-systems",
+	"desktop-operating-systems",
+	"server-operating-systems",
+	"embedded-operating-systems",
+	"game-consoles",
+}
 
 var sourceForgeCategories = []string{
-	"development", "communications", "games", "multimedia", "security",
-	"system-administration", "education", "business", "internet",
-	"science-engineering", "mobile", "office", "social-networking",
-	"storage", "text-editors", "voip", "web-browsers", "clustering",
-	"database", "networking", "printing", "religion", "screensavers",
+	"system",
+	"internet",
+	"games",
+	"multimedia",
+	"business",
+	"scientific-engineering",
+	"communications",
+	"artificial-intelligence",
+	"education",
+	"database",
+	"security",
+	"formats-and-protocols",
+	"desktop-environment",
+	"text-editors",
+	"mobile",
+	"terminals",
+	"printing",
+	"productivity",
+	"social-sciences",
+	"blockchain",
+	"religion-and-philosophy",
 }
 
 func FetchSourceForge() ([]string, string, error) {
 	os := sourceForgeOS[rand.Intn(len(sourceForgeOS))]
 	cat := sourceForgeCategories[rand.Intn(len(sourceForgeCategories))]
-	url := fmt.Sprintf("https://sourceforge.net/directory/os:%s/category:%s/", os, cat)
+	url := fmt.Sprintf("https://sourceforge.net/directory/%s/%s", cat, os)
 	source := fmt.Sprintf("sourceforge(os:%s,category:%s)", os, cat)
 
 	client := &http.Client{Timeout: 15 * time.Second}
@@ -61,14 +88,11 @@ func extractSourceForgeAppNames(htmlContent string) []string {
 	f = func(n *html.Node) {
 		if n.Type == html.ElementNode && n.Data == "a" {
 			var isProjectLink bool
-			var href string
 			for _, attr := range n.Attr {
-				if attr.Key == "href" {
-					href = attr.Val
+				if attr.Key == "class" && strings.Contains(attr.Val, "result-heading-title") {
+					isProjectLink = true
+					break
 				}
-			}
-			if strings.HasPrefix(href, "/projects/") && strings.Count(href, "/") == 2 {
-				isProjectLink = true
 			}
 			if isProjectLink {
 				title := extractText(n)

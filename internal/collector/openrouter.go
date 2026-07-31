@@ -53,7 +53,7 @@ func FetchOpenRouterModels() ([]string, string, error) {
 	}
 
 	source := fmt.Sprintf("openrouter(%s:%s)", paramName, paramValue)
-	url := fmt.Sprintf("https://openrouter.ai/api/v1/models?%s=%s&limit=100", paramName, paramValue)
+	url := fmt.Sprintf("https://openrouter.ai/api/v1/models?%s=%s", paramName, paramValue)
 
 	client := &http.Client{Timeout: 15 * time.Second}
 	req, err := http.NewRequest("GET", url, nil)
