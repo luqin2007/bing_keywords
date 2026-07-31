@@ -57,15 +57,19 @@ func extractGitHubRepoNames(htmlContent string) []string {
 	f = func(n *html.Node) {
 		if n.Type == html.ElementNode && n.Data == "a" {
 			for _, attr := range n.Attr {
-				if attr.Key == "href" && strings.Count(attr.Val, "/") == 2 &&
-					strings.HasPrefix(attr.Val, "/") {
-					parts := strings.Split(strings.TrimPrefix(attr.Val, "/"), "/")
-					if len(parts) == 2 {
-						repoName := parts[1]
-						repoName = strings.TrimSpace(repoName)
-						if repoName != "" && !seen[repoName] {
-							names = append(names, repoName)
-							seen[repoName] = true
+				if attr.Key == "href" {
+					href := attr.Val
+					if i := strings.IndexByte(href, '?'); i >= 0 {
+						href = href[:i]
+					}
+					if strings.Count(href, "/") == 2 && strings.HasPrefix(href, "/") {
+						parts := strings.Split(strings.TrimPrefix(href, "/"), "/")
+						if len(parts) == 2 {
+							repoName := strings.TrimSpace(parts[1])
+							if repoName != "" && !seen[repoName] {
+								names = append(names, repoName)
+								seen[repoName] = true
+							}
 						}
 					}
 				}

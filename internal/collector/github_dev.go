@@ -53,7 +53,11 @@ func extractGitHubDeveloperNames(htmlContent string) []string {
 				if c.Type == html.ElementNode && c.Data == "a" {
 					for _, attr := range c.Attr {
 						if attr.Key == "href" && strings.HasPrefix(attr.Val, "/") {
-							username := strings.TrimPrefix(attr.Val, "/")
+							href := attr.Val
+							if i := strings.IndexByte(href, '?'); i >= 0 {
+								href = href[:i]
+							}
+							username := strings.TrimPrefix(href, "/")
 							username = strings.TrimSpace(username)
 							if username != "" && !seen[username] &&
 								!strings.Contains(username, "/") {
@@ -77,11 +81,14 @@ func extractGitHubDeveloperNames(htmlContent string) []string {
 			if n.Type == html.ElementNode && n.Data == "a" {
 				for _, attr := range n.Attr {
 					if attr.Key == "href" && strings.HasPrefix(attr.Val, "/") {
-						username := strings.TrimPrefix(attr.Val, "/")
-						username = strings.TrimSpace(username)
-						if username != "" && !seen[username] &&
-							!strings.Contains(username, "/") &&
-							!strings.Contains(username, "?") {
+							href := attr.Val
+							if i := strings.IndexByte(href, '?'); i >= 0 {
+								href = href[:i]
+							}
+							username := strings.TrimPrefix(href, "/")
+							username = strings.TrimSpace(username)
+							if username != "" && !seen[username] &&
+								!strings.Contains(username, "/") {
 							names = append(names, username)
 							seen[username] = true
 						}
