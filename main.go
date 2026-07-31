@@ -134,7 +134,13 @@ func main() {
 	mux.HandleFunc("/api/keywords", h.ServeHTTP)
 	mux.HandleFunc("/admin", admin.ServeAdmin)
 	mux.HandleFunc("/api/admin/stats", admin.HandleStats)
-	mux.HandleFunc("/api/admin/keywords", admin.HandleKeywords)
+	mux.HandleFunc("/api/admin/keywords", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			admin.HandleDeleteKeywords(w, r)
+		} else {
+			admin.HandleKeywords(w, r)
+		}
+	})
 	mux.HandleFunc("/api/admin/logs", admin.HandleLogs)
 	mux.HandleFunc("/api/admin/config", admin.HandleConfig)
 	mux.HandleFunc("/api/admin/collect", admin.HandleCollect)

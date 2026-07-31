@@ -25,6 +25,9 @@ body { background: #FAF5FF; color: #4C1D95; }
 .btn-primary { background: #7C3AED; color: white; padding: 8px 20px; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
 .btn-primary:hover { background: #6D28D9; }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-danger { background: #DC2626; color: white; padding: 8px 20px; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+.btn-danger:hover { background: #B91C1C; }
+.btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-cta { background: #F97316; color: white; padding: 8px 20px; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
 .btn-cta:hover { background: #EA580C; }
 .badge { display: inline-block; padding: 2px 10px; border-radius: 9999px; font-size: 12px; font-weight: 500; }
@@ -44,70 +47,45 @@ tr { transition: background 0.15s; }
 tr:hover { background: #FAF5FF; }
 .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #E5E7EB; border-top-color: #7C3AED; border-radius: 50%; animation: spin 0.6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.form-label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 4px; color: #374151; }
+.form-input { width: 100%; border: 1px solid #E5E7EB; border-radius: 8px; padding: 10px 14px; outline: none; transition: border-color 0.2s; }
+.form-input:focus { border-color: #7C3AED; box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1); }
 @media (max-width: 768px) { .sidebar { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; flex-direction: row !important; z-index: 50; padding: 0 !important; border-radius: 12px 12px 0 0; } .sidebar a { flex: 1; padding: 8px 4px !important; font-size: 11px; text-align: center; } .sidebar a svg { width: 20px; height: 20px; } .main-content { padding-bottom: 70px; } }
 </style>
 </head>
 <body>
 
 <div class="flex min-h-screen">
-  <!-- Sidebar -->
   <div class="sidebar w-64 flex-shrink-0 p-4 flex flex-col gap-1 text-white hidden md:flex">
     <div class="text-xl font-bold mb-6 px-3 flex items-center gap-2">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
       Bing Keywords
     </div>
-    <a href="#" class="tab-btn active flex items-center gap-3 px-3 py-2.5 rounded-lg" data-tab="dashboard">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-      仪表盘
-    </a>
-    <a href="#" class="tab-btn flex items-center gap-3 px-3 py-2.5 rounded-lg" data-tab="keywords">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-      关键字
-    </a>
-    <a href="#" class="tab-btn flex items-center gap-3 px-3 py-2.5 rounded-lg" data-tab="logs">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-      日志
-    </a>
-    <a href="#" class="tab-btn flex items-center gap-3 px-3 py-2.5 rounded-lg" data-tab="settings">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-      设置
-    </a>
+    <a href="#" class="tab-btn active flex items-center gap-3 px-3 py-2.5 rounded-lg" data-tab="dashboard"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>仪表盘</a>
+    <a href="#" class="tab-btn flex items-center gap-3 px-3 py-2.5 rounded-lg" data-tab="keywords"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>关键字</a>
+    <a href="#" class="tab-btn flex items-center gap-3 px-3 py-2.5 rounded-lg" data-tab="logs"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>日志</a>
+    <a href="#" class="tab-btn flex items-center gap-3 px-3 py-2.5 rounded-lg" data-tab="settings"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>设置</a>
   </div>
 
-  <!-- Mobile bottom nav -->
   <div class="sidebar fixed bottom-0 left-0 right-0 flex md:hidden items-center justify-around px-2 py-1 text-xs" style="height:60px;border-radius:12px 12px 0 0;">
-    <a href="#" class="tab-btn active flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg" data-tab="dashboard">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-      <span>仪表盘</span>
-    </a>
-    <a href="#" class="tab-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg" data-tab="keywords">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-      <span>关键字</span>
-    </a>
-    <a href="#" class="tab-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg" data-tab="logs">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-      <span>日志</span>
-    </a>
-    <a href="#" class="tab-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg" data-tab="settings">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-      <span>设置</span>
-    </a>
+    <a href="#" class="tab-btn active flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg" data-tab="dashboard"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg><span>仪表盘</span></a>
+    <a href="#" class="tab-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg" data-tab="keywords"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg><span>关键字</span></a>
+    <a href="#" class="tab-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg" data-tab="logs"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><span>日志</span></a>
+    <a href="#" class="tab-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg" data-tab="settings"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg><span>设置</span></a>
   </div>
 
-  <!-- Main Content -->
   <div class="main-content flex-1 p-4 md:p-8">
     <div class="max-w-7xl mx-auto">
 
-      <!-- Dashboard Tab -->
+      <!-- Dashboard -->
       <div id="tab-dashboard" class="tab-content active">
         <h1 class="text-2xl font-bold mb-6">仪表盘</h1>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" id="kpi-cards">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div class="card kpi-card p-4"><div class="text-sm text-gray-500">总关键字</div><div class="text-2xl font-bold text-[#4C1D95]" id="stat-total">-</div></div>
           <div class="card kpi-card green p-4"><div class="text-sm text-gray-500">可用关键字</div><div class="text-2xl font-bold text-green-700" id="stat-available">-</div></div>
           <div class="card kpi-card orange p-4"><div class="text-sm text-gray-500">今日已使用</div><div class="text-2xl font-bold text-orange-700" id="stat-used-today">-</div></div>
           <div class="card kpi-card blue p-4"><div class="text-sm text-gray-500">上次采集</div><div class="text-sm font-medium text-blue-700" id="stat-last-collect">-</div></div>
         </div>
-
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <div class="card p-6">
             <h2 class="text-lg font-semibold mb-4">来源分布</h2>
@@ -117,8 +95,7 @@ tr:hover { background: #FAF5FF; }
             <h2 class="text-lg font-semibold mb-4">快速操作</h2>
             <button onclick="triggerCollect()" class="btn-cta w-full mb-3" id="collect-btn">
               <span class="flex items-center justify-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                立即采集关键字
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>立即采集关键字
               </span>
             </button>
             <div id="collect-result" class="text-sm text-gray-600 mt-2"></div>
@@ -126,7 +103,7 @@ tr:hover { background: #FAF5FF; }
         </div>
       </div>
 
-      <!-- Keywords Tab -->
+      <!-- Keywords -->
       <div id="tab-keywords" class="tab-content">
         <h1 class="text-2xl font-bold mb-6">关键字管理</h1>
         <div class="card p-4 mb-4">
@@ -141,13 +118,22 @@ tr:hover { background: #FAF5FF; }
               <option value="recent">近7天新增</option>
             </select>
             <input id="kw-search" class="w-48" placeholder="搜索关键字..." oninput="debounceSearch()">
+            <button onclick="batchDelete()" class="btn-danger" id="batch-delete-btn" disabled>删除选中</button>
             <span class="text-sm text-gray-500 ml-auto" id="kw-total-info"></span>
           </div>
         </div>
+        <div id="batch-delete-status" class="text-sm mb-2"></div>
         <div class="card overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
-              <thead><tr class="bg-gray-50 text-gray-600"><th class="text-left p-3">关键字</th><th class="text-left p-3">来源</th><th class="text-left p-3">创建时间</th><th class="text-left p-3">最近使用</th><th class="text-left p-3">状态</th></tr></thead>
+              <thead><tr class="bg-gray-50 text-gray-600">
+                <th class="p-3 w-10"><input type="checkbox" id="kw-select-all" onchange="toggleAll()"></th>
+                <th class="text-left p-3">关键字</th>
+                <th class="text-left p-3">来源</th>
+                <th class="text-left p-3">创建时间</th>
+                <th class="text-left p-3">最近使用</th>
+                <th class="text-left p-3">状态</th>
+              </tr></thead>
               <tbody id="kw-table-body"></tbody>
             </table>
           </div>
@@ -158,7 +144,7 @@ tr:hover { background: #FAF5FF; }
         </div>
       </div>
 
-      <!-- Logs Tab -->
+      <!-- Logs -->
       <div id="tab-logs" class="tab-content">
         <h1 class="text-2xl font-bold mb-6">请求日志</h1>
         <div class="card p-4 mb-4">
@@ -186,15 +172,40 @@ tr:hover { background: #FAF5FF; }
         </div>
       </div>
 
-      <!-- Settings Tab -->
+      <!-- Settings -->
       <div id="tab-settings" class="tab-content">
         <h1 class="text-2xl font-bold mb-6">设置</h1>
         <div class="card p-6">
-          <p class="text-sm text-gray-500 mb-3">编辑 config.json 配置文件，保存后需重启服务生效。</p>
-          <textarea id="config-editor" class="w-full h-80 font-mono text-sm p-4 border rounded-lg" style="background:#1E1E2E;color:#CDD6F4;border-color:#45475A"></textarea>
-          <div class="flex gap-3 mt-4">
-            <button onclick="saveConfig()" class="btn-primary">保存配置</button>
-            <button onclick="loadConfig()" class="btn-primary" style="background:#6B7280">重新加载</button>
+          <p class="text-sm text-gray-500 mb-4">修改配置后点击保存，重启服务生效。</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="form-label">端口</label>
+              <input id="cfg-port" class="form-input font-mono" placeholder="8080">
+            </div>
+            <div>
+              <label class="form-label">数据库路径</label>
+              <input id="cfg-db-path" class="form-input font-mono" placeholder="/data/keywords.db">
+            </div>
+            <div>
+              <label class="form-label">日志文件路径</label>
+              <input id="cfg-log-file" class="form-input font-mono" placeholder="/data/requests.log">
+            </div>
+            <div>
+              <label class="form-label">Webhook URL</label>
+              <input id="cfg-webhook-url" class="form-input font-mono" placeholder="可选">
+            </div>
+            <div>
+              <label class="form-label">Webhook HMAC 密钥</label>
+              <input id="cfg-webhook-hmac" class="form-input font-mono" placeholder="可选">
+            </div>
+            <div>
+              <label class="form-label">管理页面 Token</label>
+              <input id="cfg-admin-token" class="form-input font-mono" placeholder="空则无需认证">
+            </div>
+          </div>
+          <div class="flex gap-3 mt-6">
+            <button onclick="saveConfigForm()" class="btn-primary">保存配置</button>
+            <button onclick="loadConfigForm()" class="btn-primary" style="background:#6B7280">重新加载</button>
             <span id="config-status" class="text-sm ml-3 self-center"></span>
           </div>
         </div>
@@ -207,8 +218,8 @@ tr:hover { background: #FAF5FF; }
 <script>
 let currentPage = { keywords: 1, logs: 1 };
 let searchTimer = null;
+let selectedIds = new Set();
 
-// Tab switching
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', function(e) {
     e.preventDefault();
@@ -217,9 +228,9 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     this.classList.add('active');
     document.getElementById('tab-' + this.dataset.tab).classList.add('active');
     if (this.dataset.tab === 'dashboard') loadDashboard();
-    if (this.dataset.tab === 'keywords') loadKeywords();
-    if (this.dataset.tab === 'logs') loadLogs();
-    if (this.dataset.tab === 'settings') loadConfig();
+    if (this.dataset.tab === 'keywords') { currentPage.keywords = 1; loadKeywords(); }
+    if (this.dataset.tab === 'logs') { currentPage.logs = 1; loadLogs(); }
+    if (this.dataset.tab === 'settings') loadConfigForm();
   });
 });
 
@@ -245,7 +256,6 @@ async function loadDashboard() {
   document.getElementById('stat-available').textContent = s.available;
   document.getElementById('stat-used-today').textContent = s.used_today;
   document.getElementById('stat-last-collect').textContent = s.last_collect || '从未';
-
   const container = document.getElementById('source-distribution');
   container.innerHTML = '';
   const entries = Object.entries(s.by_source || {});
@@ -253,9 +263,7 @@ async function loadDashboard() {
   const colors = ['#7C3AED', '#A78BFA', '#F97316', '#3B82F6', '#10B981', '#EC4899', '#F59E0B'];
   entries.forEach(([src, count], i) => {
     const pct = (count / maxVal * 100).toFixed(0);
-    container.innerHTML += `
-      <div><div class="flex justify-between text-sm mb-1"><span>${src}</span><span class="font-medium">${count}</span></div>
-      <div class="source-bar" style="width:${pct}%;background:${colors[i % colors.length]};max-width:100%"></div></div>`;
+    container.innerHTML += `<div><div class="flex justify-between text-sm mb-1"><span>${src}</span><span class="font-medium">${count}</span></div><div class="source-bar" style="width:${pct}%;background:${colors[i % colors.length]};max-width:100%"></div></div>`;
   });
 }
 
@@ -265,20 +273,23 @@ async function loadKeywords() {
   const source = document.getElementById('kw-source').value;
   const status = document.getElementById('kw-status').value;
   const search = document.getElementById('kw-search').value;
-  const d = await api(`/api/admin/keywords?page=${page}&size=50&source=${source}&status=${status}`);
+  const d = await api(`/api/admin/keywords?page=${page}&size=50&source=${source}&status=${status}&search=${encodeURIComponent(search)}`);
   if (d.code !== 200) return;
   const { keywords, total, page: pg, size: sz } = d.data;
+  selectedIds.clear();
+  document.getElementById('kw-select-all').checked = false;
+  updateBatchBtn();
 
   const tbody = document.getElementById('kw-table-body');
   tbody.innerHTML = '';
   if (keywords.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-500">暂无数据</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500">暂无数据</td></tr>';
   } else {
     keywords.forEach(k => {
       const created = new Date(k.created_at * 1000).toLocaleString();
       const used = k.used_at ? new Date(k.used_at * 1000).toLocaleString() : '从未';
       const badgeCls = k.status === 'available' ? 'badge-available' : 'badge-used';
-      tbody.innerHTML += `<tr><td class="p-3 font-medium">${k.word}</td><td class="p-3 text-gray-600"><code class="text-xs">${k.source || '-'}</code></td><td class="p-3 text-gray-500">${created}</td><td class="p-3 text-gray-500">${used}</td><td class="p-3"><span class="badge ${badgeCls}">${k.status}</span></td></tr>`;
+      tbody.innerHTML += `<tr><td class="p-3"><input type="checkbox" class="kw-checkbox" value="${k.id}" onchange="toggleSelect(${k.id})"></td><td class="p-3 font-medium">${k.word}</td><td class="p-3 text-gray-600"><code class="text-xs">${k.source || '-'}</code></td><td class="p-3 text-gray-500">${created}</td><td class="p-3 text-gray-500">${used}</td><td class="p-3"><span class="badge ${badgeCls}">${k.status}</span></td></tr>`;
     });
   }
 
@@ -296,6 +307,42 @@ async function loadKeywords() {
 
 function goKeywordPage(p) { currentPage.keywords = p; loadKeywords(); }
 
+function toggleSelect(id) {
+  if (selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id);
+  updateBatchBtn();
+}
+
+function toggleAll() {
+  const checked = document.getElementById('kw-select-all').checked;
+  document.querySelectorAll('.kw-checkbox').forEach(cb => { cb.checked = checked; });
+  selectedIds.clear();
+  if (checked) {
+    document.querySelectorAll('.kw-checkbox').forEach(cb => selectedIds.add(parseInt(cb.value)));
+  }
+  updateBatchBtn();
+}
+
+function updateBatchBtn() {
+  const btn = document.getElementById('batch-delete-btn');
+  btn.disabled = selectedIds.size === 0;
+  btn.textContent = selectedIds.size > 0 ? `删除选中 (${selectedIds.size})` : '删除选中';
+}
+
+async function batchDelete() {
+  if (selectedIds.size === 0) return;
+  if (!confirm(`确定删除 ${selectedIds.size} 个关键字？`)) return;
+  const btn = document.getElementById('batch-delete-btn');
+  btn.disabled = true; btn.textContent = '删除中...';
+  const d = await api('/api/admin/keywords', {
+    method: 'POST',
+    body: JSON.stringify({ ids: Array.from(selectedIds) })
+  });
+  const status = document.getElementById('batch-delete-status');
+  status.textContent = d.code === 200 ? `✓ 已删除 ${d.data.deleted} 个关键字` : '✗ ' + d.msg;
+  status.className = 'text-sm mb-2 ' + (d.code === 200 ? 'text-green-600' : 'text-red-600');
+  loadKeywords();
+}
+
 // Logs
 async function loadLogs() {
   const page = currentPage.logs;
@@ -303,7 +350,6 @@ async function loadLogs() {
   const d = await api(`/api/admin/logs?page=${page}&size=50&status=${status}`);
   if (d.code !== 200) return;
   const { entries, total, page: pg, size: sz } = d.data;
-
   const tbody = document.getElementById('log-table-body');
   tbody.innerHTML = '';
   if (entries.length === 0) {
@@ -314,7 +360,6 @@ async function loadLogs() {
       tbody.innerHTML += `<tr><td class="p-3 text-xs text-gray-500">${e.time || ''}</td><td class="p-3 text-sm"><code class="text-xs">${e.method || ''} ${e.path || ''}</code></td><td class="p-3">${e.count || 0}</td><td class="p-3">${e.dur_ms || 0}ms</td><td class="p-3"><span class="badge ${badgeCls}">${e.status || ''}</span></td><td class="p-3 text-red-500 text-xs">${e.error || ''}</td></tr>`;
     });
   }
-
   const totalPages = Math.ceil(total / sz) || 1;
   document.getElementById('log-total-info').textContent = `共 ${total} 条`;
   document.getElementById('log-pagination-info').textContent = `第 ${pg}/${totalPages} 页`;
@@ -330,17 +375,30 @@ async function loadLogs() {
 function goLogPage(p) { currentPage.logs = p; loadLogs(); }
 
 // Settings
-async function loadConfig() {
+async function loadConfigForm() {
   const d = await api('/api/admin/config');
   if (d.code !== 200) return;
-  document.getElementById('config-editor').value = JSON.stringify(JSON.parse(d.data), null, 2);
+  const c = JSON.parse(d.data);
+  document.getElementById('cfg-port').value = c.port || '';
+  document.getElementById('cfg-db-path').value = c.db_path || '';
+  document.getElementById('cfg-log-file').value = c.log_file || '';
+  document.getElementById('cfg-webhook-url').value = c.webhook_url || '';
+  document.getElementById('cfg-webhook-hmac').value = c.webhook_hmac || '';
+  document.getElementById('cfg-admin-token').value = c.admin_token || '';
 }
 
-async function saveConfig() {
+async function saveConfigForm() {
   const btn = document.querySelector('.btn-primary');
   btn.disabled = true; btn.textContent = '保存中...';
-  const val = document.getElementById('config-editor').value;
-  const d = await api('/api/admin/config', { method: 'PUT', body: val });
+  const cfg = {
+    port: parseInt(document.getElementById('cfg-port').value) || 8080,
+    db_path: document.getElementById('cfg-db-path').value || '/data/keywords.db',
+    log_file: document.getElementById('cfg-log-file').value || '/data/requests.log',
+    webhook_url: document.getElementById('cfg-webhook-url').value || '',
+    webhook_hmac: document.getElementById('cfg-webhook-hmac').value || '',
+    admin_token: document.getElementById('cfg-admin-token').value || ''
+  };
+  const d = await api('/api/admin/config', { method: 'PUT', body: JSON.stringify(cfg) });
   const status = document.getElementById('config-status');
   status.textContent = d.code === 200 ? '✓ 已保存' : '✗ ' + d.msg;
   status.className = 'text-sm ml-3 self-center ' + (d.code === 200 ? 'text-green-600' : 'text-red-600');
@@ -354,7 +412,7 @@ async function triggerCollect() {
   const d = await api('/api/admin/collect', { method: 'POST' });
   const result = document.getElementById('collect-result');
   if (d.code === 200) {
-    result.innerHTML = `✅ 采集完成：${d.data.sources} 个源成功，${d.data.errors} 个失败`;
+    result.innerHTML = `采集完成：${d.data.sources} 个源成功，${d.data.errors} 个失败`;
     loadDashboard();
     if (d.data.error_details) result.innerHTML += '<br>❌ ' + d.data.error_details.join('<br>❌ ');
   } else {
@@ -363,7 +421,6 @@ async function triggerCollect() {
   btn.disabled = false; btn.innerHTML = '<span class="flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>立即采集关键字</span>';
 }
 
-// Load source filter options
 async function loadSourceOptions() {
   const d = await api('/api/admin/stats');
   if (d.code !== 200) return;
@@ -376,7 +433,6 @@ async function loadSourceOptions() {
   });
 }
 
-// Init
 loadDashboard();
 loadSourceOptions();
 </script>

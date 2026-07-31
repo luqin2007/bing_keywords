@@ -179,6 +179,34 @@ func (db *DB) DeleteOlderThan(days int) (int, error) {
 	return int(n), nil
 }
 
+func (db *DB) DeleteByIDs(ids []int64) (int, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+	tx, err := db.conn.Begin()
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare("DELETE FROM keywords WHERE id = ?")
+	if err != nil {
+		return 0, err
+	}
+	defer stmt.Close()
+
+	deleted := 0
+	for _, id := range ids {
+		res, err := stmt.Exec(id)
+		if err != nil {
+			return 0, err
+		}
+		n, _ := res.RowsAffected()
+		deleted += int(n)
+	}
+	return deleted, tx.Commit()
+}
+
 func (db *DB) GetMeta(key string) (string, error) {
 	var val string
 	err := db.conn.QueryRow("SELECT value FROM meta WHERE key = ?", key).Scan(&val)
@@ -194,11 +222,11 @@ func (db *DB) SetMeta(key, value string) error {
 }
 
 type Stats struct {
-	Total       int               `json:"total"`
-	Available   int               `json:"available"`
-	UsedToday   int               `json:"used_today"`
-	BySource    map[string]int    `json:"by_source"`
-	LastCollect string            `json:"last_collect"`
+	Total       int            `json:"total"`
+	Available   int            `json:"available"`
+	UsedToday   int            `json:"used_today"`
+	BySource    map[string]int `json:"by_source"`
+	LastCollect string         `json:"last_collect"`
 }
 
 func (db *DB) GetStats() (*Stats, error) {
@@ -246,13 +274,18 @@ type KeywordRow struct {
 	Status    string `json:"status"`
 }
 
-func (db *DB) ListKeywords(page, size int, source, status string) ([]KeywordRow, int, error) {
+func (db *DB) ListKeywords(page, size int, source, status, search string) ([]KeywordRow, int, error) {
 	where := "1=1"
 	args := []interface{}{}
 
 	if source != "" {
 		where += " AND source LIKE ?"
 		args = append(args, source+"%")
+	}
+
+	if search != "" {
+		where += " AND word LIKE ?"
+		args = append(args, "%"+search+"%")
 	}
 
 	cut := time.Now().Add(-10 * 24 * time.Hour).Unix()

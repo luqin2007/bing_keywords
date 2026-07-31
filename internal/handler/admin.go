@@ -91,8 +91,9 @@ func (a *AdminHandler) HandleKeywords(w http.ResponseWriter, r *http.Request) {
 	}
 	source := r.URL.Query().Get("source")
 	status := r.URL.Query().Get("status")
+	search := r.URL.Query().Get("search")
 
-	keywords, total, err := a.db.ListKeywords(page, size, source, status)
+	keywords, total, err := a.db.ListKeywords(page, size, source, status, search)
 	if err != nil {
 		writeAdminJSON(w, 500, "查询失败: "+err.Error(), nil)
 		return
@@ -105,6 +106,33 @@ func (a *AdminHandler) HandleKeywords(w http.ResponseWriter, r *http.Request) {
 		"size":     size,
 	}
 	writeAdminJSON(w, 200, "ok", result)
+}
+
+func (a *AdminHandler) HandleDeleteKeywords(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		IDs []int64 `json:"ids"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeAdminJSON(w, 400, "无效的请求: "+err.Error(), nil)
+		return
+	}
+	if len(req.IDs) == 0 {
+		writeAdminJSON(w, 400, "请选择要删除的关键字", nil)
+		return
+	}
+
+	deleted, err := a.db.DeleteByIDs(req.IDs)
+	if err != nil {
+		writeAdminJSON(w, 500, "删除失败: "+err.Error(), nil)
+		return
+	}
+
+	writeAdminJSON(w, 200, "删除成功", map[string]int{"deleted": deleted})
 }
 
 func (a *AdminHandler) HandleLogs(w http.ResponseWriter, r *http.Request) {
