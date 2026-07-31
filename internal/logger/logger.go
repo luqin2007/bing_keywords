@@ -116,16 +116,13 @@ func (l *Logger) ReadLogs(page, size int, statusFilter, typeFilter string) (*Log
 
 	total := len(allEntries)
 
-	start := total - (page-1)*size
-	if start < 0 {
-		start = 0
+	start := (page - 1) * size
+	if start >= total {
+		return &LogPage{Entries: []LogEntry{}, Total: total, Page: page, Size: size}, nil
 	}
-	end := total - (page-1)*size + size
+	end := start + size
 	if end > total {
 		end = total
-	}
-	if start >= end {
-		return &LogPage{Entries: []LogEntry{}, Total: total, Page: page, Size: size}, nil
 	}
 
 	entries := make([]LogEntry, 0, end-start)

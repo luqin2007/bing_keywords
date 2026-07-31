@@ -166,7 +166,7 @@ tr:hover { background: #FAF5FF; }
         <div class="card overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
-              <thead><tr class="bg-gray-50 text-gray-600"><th class="text-left p-3">时间</th><th class="text-left p-3">类型</th><th class="text-left p-3">请求 / 来源</th><th class="text-left p-3">IP</th><th class="text-left p-3">设备</th><th class="text-left p-3">数量</th><th class="text-left p-3">耗时</th><th class="text-left p-3">状态</th><th class="text-left p-3">错误</th></tr></thead>
+              <thead><tr class="bg-gray-50 text-gray-600"><th class="text-left p-3">时间</th><th class="text-left p-3">类型</th><th class="text-left p-3">请求 / 来源</th><th class="text-left p-3">IP</th><th class="text-left p-3">设备</th><th class="text-left p-3">数量</th><th class="text-left p-3">耗时</th><th class="text-left p-3">状态</th><th class="text-left p-3">详情</th></tr></thead>
               <tbody id="log-table-body"></tbody>
             </table>
           </div>
@@ -361,13 +361,16 @@ async function loadLogs() {
   if (entries.length === 0) {
     tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-gray-500">暂无日志</td></tr>';
   } else {
-    entries.forEach(e => {
+    entries.forEach((e, idx) => {
       const isColl = e.type === 'collection';
       const typeLabel = isColl ? '采集' : '请求';
       const typeBadge = isColl ? 'badge-partial' : 'badge-available';
       const reqText = isColl ? (e.sources || []).join(', ') : (e.method || '') + ' ' + (e.path || '');
       const badgeCls = e.status === 'success' ? 'badge-available' : e.status === 'partial' ? 'badge-partial' : 'badge-used';
-      tbody.innerHTML += `<tr><td class="p-3 text-xs text-gray-500">${e.time || ''}</td><td class="p-3"><span class="badge ${typeBadge}">${typeLabel}</span></td><td class="p-3 text-sm"><code class="text-xs">${escHtml(reqText)}</code></td><td class="p-3 text-xs text-gray-500">${escHtml(e.ip || '')}</td><td class="p-3 text-xs text-gray-500" title="${escHtml(e.user_agent || '')}">${abbreviateUA(e.user_agent || '')}</td><td class="p-3">${e.count || 0}</td><td class="p-3">${e.dur_ms || 0}ms</td><td class="p-3"><span class="badge ${badgeCls}">${e.status || ''}</span></td><td class="p-3 text-red-500 text-xs">${escHtml(e.error || '')}</td></tr>`;
+      const timeStr = e.time ? new Date(e.time).toLocaleString('zh-CN', { hour12: false }) : '';
+      const detailId = 'log-detail-' + idx;
+      tbody.innerHTML += `<tr class="log-row"><td class="p-3 text-xs text-gray-500">${timeStr}</td><td class="p-3"><span class="badge ${typeBadge}">${typeLabel}</span></td><td class="p-3 text-sm"><code class="text-xs">${escHtml(reqText)}</code></td><td class="p-3 text-xs text-gray-500">${escHtml(e.ip || '')}</td><td class="p-3 text-xs text-gray-500" title="${escHtml(e.user_agent || '')}">${abbreviateUA(e.user_agent || '')}</td><td class="p-3">${e.count || 0}</td><td class="p-3">${e.dur_ms || 0}ms</td><td class="p-3"><span class="badge ${badgeCls}">${e.status || ''}</span></td><td class="p-3"><button class="text-sm text-blue-600 hover:underline" onclick="toggleDetail('${detailId}')">详情 ▸</button></td></tr>`;
+      tbody.innerHTML += `<tr id="${detailId}" class="detail-row" style="display:none"><td colspan="9" class="p-4 bg-gray-50 border-t border-gray-200">${buildDetailHtml(e)}</td></tr>`;
     });
   }
   const totalPages = Math.ceil(total / sz) || 1;
@@ -380,6 +383,47 @@ async function loadLogs() {
     pag.innerHTML += `<button class="pagination-btn ${i===pg?'active':''}" onclick="goLogPage(${i})">${i}</button>`;
   }
   pag.innerHTML += `<button class="pagination-btn" onclick="goLogPage(${pg+1})" ${pg>=totalPages?'disabled':''}>下一页</button>`;
+}
+
+function toggleDetail(id) {
+  const row = document.getElementById(id);
+  if (!row) return;
+  const btn = row.previousElementSibling.querySelector('button');
+  const hidden = row.style.display === 'none';
+  document.querySelectorAll('.detail-row').forEach(r => {
+    if (r.id !== id) {
+      r.style.display = 'none';
+      const b = r.previousElementSibling.querySelector('button');
+      if (b) b.innerHTML = '详情 ▸';
+    }
+  });
+  row.style.display = hidden ? '' : 'none';
+  if (btn) btn.innerHTML = hidden ? '详情 ▾' : '详情 ▸';
+}
+
+function buildDetailHtml(e) {
+  if (e.type === 'collection') {
+    return '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">' +
+      '<div><div class="font-semibold mb-2 text-gray-700">采集信息</div>' +
+      '<div class="text-gray-600 mb-1">来源: <code class="text-xs">' + escHtml((e.sources || []).join(', ') || '-') + '</code></div>' +
+      '<div class="text-gray-600 mb-1">目标数量: ' + (e.count || 0) + '</div>' +
+      '<div class="text-gray-600 mb-1">耗时: ' + (e.dur_ms || 0) + 'ms</div>' +
+      '<div class="text-gray-600 mb-1">状态: ' + (e.status || '') + '</div></div>' +
+      '<div><div class="font-semibold mb-2 text-gray-700">错误详情</div>' +
+      '<div class="text-red-600 whitespace-pre-wrap">' + (e.error ? escHtml(e.error) : '无') + '</div></div></div>';
+  }
+  return '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">' +
+    '<div><div class="font-semibold mb-2 text-gray-700">请求信息</div>' +
+    '<div class="text-gray-600 mb-1">方法: ' + (e.method || '') + '</div>' +
+    '<div class="text-gray-600 mb-1">路径: <code class="text-xs">' + escHtml(e.path || '') + '</code></div>' +
+    '<div class="text-gray-600 mb-1">IP: ' + escHtml(e.ip || '') + '</div>' +
+    '<div class="text-gray-600 mb-1">设备: ' + escHtml(e.user_agent || '') + '</div>' +
+    '<div class="text-gray-600 mb-1">请求体: (GET 请求无请求体)</div></div>' +
+    '<div><div class="font-semibold mb-2 text-gray-700">响应信息</div>' +
+    '<div class="text-gray-600 mb-1">状态: ' + (e.status || '') + '</div>' +
+    '<div class="text-gray-600 mb-1">耗时: ' + (e.dur_ms || 0) + 'ms</div>' +
+    '<div class="text-gray-600 mb-1">返回数量: ' + (e.count || 0) + '</div>' +
+    '<div class="text-gray-600 mb-1">关键字: <code class="text-xs">' + escHtml((e.keywords || []).join(', ')) + '</code></div></div></div>';
 }
 
 function abbreviateUA(ua) {
