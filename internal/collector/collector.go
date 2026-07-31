@@ -34,14 +34,19 @@ func New(database *db.DB) *Collector {
 	}
 }
 
-func (c *Collector) Collect(target int) ([]SourceResult, []error) {
+func (c *Collector) Collect(targetNew int) ([]SourceResult, []error, int) {
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	indices := rng.Perm(len(c.sources))
 
 	var allErrors []error
 	var allResults []SourceResult
+	newWords := 0
 
 	for _, idx := range indices {
+		if newWords >= targetNew {
+			break
+		}
+
 		words, source, err := c.sources[idx]()
 		if err != nil {
 			allErrors = append(allErrors, err)
@@ -57,27 +62,25 @@ func (c *Collector) Collect(target int) ([]SourceResult, []error) {
 		}
 		if inserted > 0 {
 			allResults = append(allResults, SourceResult{Source: source, Words: words})
-		}
-		count, _ := c.db.Count()
-		if count >= target {
-			break
+			newWords += inserted
 		}
 	}
 
-	return allResults, allErrors
+	return allResults, allErrors, newWords
 }
 
-func (c *Collector) CollectUntil(target int) ([]SourceResult, []error) {
+func (c *Collector) CollectUntil(targetNew int) ([]SourceResult, []error) {
 	var allErrors []error
 	var allResults []SourceResult
+	totalNew := 0
 
 	for attempts := 0; attempts < 8; attempts++ {
-		results, errs := c.Collect(target)
+		results, errs, newWords := c.Collect(targetNew - totalNew)
 		allResults = append(allResults, results...)
 		allErrors = append(allErrors, errs...)
+		totalNew += newWords
 
-		count, _ := c.db.Count()
-		if count >= target {
+		if totalNew >= targetNew {
 			break
 		}
 		time.Sleep(500 * time.Millisecond)
