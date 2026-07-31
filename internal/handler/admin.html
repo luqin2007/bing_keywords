@@ -146,10 +146,15 @@ tr:hover { background: #FAF5FF; }
 
       <!-- Logs -->
       <div id="tab-logs" class="tab-content">
-        <h1 class="text-2xl font-bold mb-6">请求日志</h1>
+        <h1 class="text-2xl font-bold mb-6">日志</h1>
         <div class="card p-4 mb-4">
           <div class="flex flex-wrap gap-3 items-center">
-            <select id="log-status" class="w-32" onchange="loadLogs()">
+            <select id="log-type" class="w-28" onchange="loadLogs()">
+              <option value="">全部类型</option>
+              <option value="request">请求</option>
+              <option value="collection">采集</option>
+            </select>
+            <select id="log-status" class="w-28" onchange="loadLogs()">
               <option value="">全部状态</option>
               <option value="success">成功</option>
               <option value="partial">部分</option>
@@ -161,7 +166,7 @@ tr:hover { background: #FAF5FF; }
         <div class="card overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
-              <thead><tr class="bg-gray-50 text-gray-600"><th class="text-left p-3">时间</th><th class="text-left p-3">请求</th><th class="text-left p-3">数量</th><th class="text-left p-3">耗时</th><th class="text-left p-3">状态</th><th class="text-left p-3">错误</th></tr></thead>
+              <thead><tr class="bg-gray-50 text-gray-600"><th class="text-left p-3">时间</th><th class="text-left p-3">类型</th><th class="text-left p-3">请求 / 来源</th><th class="text-left p-3">IP</th><th class="text-left p-3">设备</th><th class="text-left p-3">数量</th><th class="text-left p-3">耗时</th><th class="text-left p-3">状态</th><th class="text-left p-3">错误</th></tr></thead>
               <tbody id="log-table-body"></tbody>
             </table>
           </div>
@@ -347,17 +352,22 @@ async function batchDelete() {
 async function loadLogs() {
   const page = currentPage.logs;
   const status = document.getElementById('log-status').value;
-  const d = await api(`/api/admin/logs?page=${page}&size=50&status=${status}`);
+  const typeFilter = document.getElementById('log-type').value;
+  const d = await api(`/api/admin/logs?page=${page}&size=50&status=${status}&type=${typeFilter}`);
   if (d.code !== 200) return;
   const { entries, total, page: pg, size: sz } = d.data;
   const tbody = document.getElementById('log-table-body');
   tbody.innerHTML = '';
   if (entries.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500">暂无日志</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-gray-500">暂无日志</td></tr>';
   } else {
     entries.forEach(e => {
+      const isColl = e.type === 'collection';
+      const typeLabel = isColl ? '采集' : '请求';
+      const typeBadge = isColl ? 'badge-partial' : 'badge-available';
+      const reqText = isColl ? (e.sources || []).join(', ') : (e.method || '') + ' ' + (e.path || '');
       const badgeCls = e.status === 'success' ? 'badge-available' : e.status === 'partial' ? 'badge-partial' : 'badge-used';
-      tbody.innerHTML += `<tr><td class="p-3 text-xs text-gray-500">${e.time || ''}</td><td class="p-3 text-sm"><code class="text-xs">${e.method || ''} ${e.path || ''}</code></td><td class="p-3">${e.count || 0}</td><td class="p-3">${e.dur_ms || 0}ms</td><td class="p-3"><span class="badge ${badgeCls}">${e.status || ''}</span></td><td class="p-3 text-red-500 text-xs">${e.error || ''}</td></tr>`;
+      tbody.innerHTML += `<tr><td class="p-3 text-xs text-gray-500">${e.time || ''}</td><td class="p-3"><span class="badge ${typeBadge}">${typeLabel}</span></td><td class="p-3 text-sm"><code class="text-xs">${escHtml(reqText)}</code></td><td class="p-3 text-xs text-gray-500">${escHtml(e.ip || '')}</td><td class="p-3 text-xs text-gray-500" title="${escHtml(e.user_agent || '')}">${abbreviateUA(e.user_agent || '')}</td><td class="p-3">${e.count || 0}</td><td class="p-3">${e.dur_ms || 0}ms</td><td class="p-3"><span class="badge ${badgeCls}">${e.status || ''}</span></td><td class="p-3 text-red-500 text-xs">${escHtml(e.error || '')}</td></tr>`;
     });
   }
   const totalPages = Math.ceil(total / sz) || 1;
@@ -370,6 +380,18 @@ async function loadLogs() {
     pag.innerHTML += `<button class="pagination-btn ${i===pg?'active':''}" onclick="goLogPage(${i})">${i}</button>`;
   }
   pag.innerHTML += `<button class="pagination-btn" onclick="goLogPage(${pg+1})" ${pg>=totalPages?'disabled':''}>下一页</button>`;
+}
+
+function abbreviateUA(ua) {
+  if (!ua) return '';
+  if (ua.length <= 50) return ua;
+  if (ua.includes(';')) return ua.split(';')[0].trim() + '...';
+  return ua.substring(0, 50) + '...';
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function goLogPage(p) { currentPage.logs = p; loadLogs(); }

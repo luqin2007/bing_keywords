@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"math"
+	"net"
 	"net/http"
 	"strconv"
 	"time"
@@ -125,9 +126,16 @@ func (h *Handler) logRequest(r *http.Request, count int, keywords []db.Keyword, 
 	for _, k := range keywords {
 		titles = append(titles, k.Word)
 	}
+	ip := r.RemoteAddr
+	if h, _, err := net.SplitHostPort(ip); err == nil {
+		ip = h
+	}
 	h.logger.Write(logger.LogEntry{
-		Method:   r.Method,
-		Path:     r.URL.String(),
+		Type:      "request",
+		Method:    r.Method,
+		Path:      r.URL.String(),
+		IP:        ip,
+		UserAgent: r.UserAgent(),
 		Count:    count,
 		Keywords: titles,
 		DurMs:    time.Since(start).Milliseconds(),

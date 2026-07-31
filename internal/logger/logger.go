@@ -11,14 +11,18 @@ import (
 )
 
 type LogEntry struct {
-	Time     string   `json:"time"`
-	Method   string   `json:"method"`
-	Path     string   `json:"path"`
-	Count    int      `json:"count"`
-	Keywords []string `json:"keywords"`
-	DurMs    int64    `json:"duration_ms"`
-	Status   string   `json:"status"`
-	Error    string   `json:"error"`
+	Time      string   `json:"time"`
+	Type      string   `json:"type,omitempty"`
+	Method    string   `json:"method,omitempty"`
+	Path      string   `json:"path,omitempty"`
+	IP        string   `json:"ip,omitempty"`
+	UserAgent string   `json:"user_agent,omitempty"`
+	Count     int      `json:"count"`
+	Keywords  []string `json:"keywords,omitempty"`
+	Sources   []string `json:"sources,omitempty"`
+	DurMs     int64    `json:"duration_ms"`
+	Status    string   `json:"status,omitempty"`
+	Error     string   `json:"error,omitempty"`
 }
 
 type Logger struct {
@@ -74,7 +78,7 @@ type LogPage struct {
 	Size    int        `json:"size"`
 }
 
-func (l *Logger) ReadLogs(page, size int, statusFilter string) (*LogPage, error) {
+func (l *Logger) ReadLogs(page, size int, statusFilter, typeFilter string) (*LogPage, error) {
 	if !l.enabled || l.filePath == "" {
 		return &LogPage{Entries: []LogEntry{}, Total: 0, Page: page, Size: size}, nil
 	}
@@ -98,6 +102,9 @@ func (l *Logger) ReadLogs(page, size int, statusFilter string) (*LogPage, error)
 			continue
 		}
 		if statusFilter != "" && entry.Status != statusFilter {
+			continue
+		}
+		if typeFilter != "" && entry.Type != typeFilter {
 			continue
 		}
 		allEntries = append(allEntries, entry)

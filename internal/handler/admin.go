@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
+	"time"
 
 	"everyday_keywords/internal/collector"
 	"everyday_keywords/internal/db"
@@ -145,8 +147,9 @@ func (a *AdminHandler) HandleLogs(w http.ResponseWriter, r *http.Request) {
 		size = 50
 	}
 	status := r.URL.Query().Get("status")
+	typeFilter := r.URL.Query().Get("type")
 
-	logPage, err := a.logger.ReadLogs(page, size, status)
+	logPage, err := a.logger.ReadLogs(page, size, status, typeFilter)
 	if err != nil {
 		writeAdminJSON(w, 500, "读取日志失败: "+err.Error(), nil)
 		return
@@ -197,7 +200,38 @@ func (a *AdminHandler) HandleCollect(w http.ResponseWriter, r *http.Request) {
 		count = 100
 	}
 
+	start := time.Now()
 	results, errs := a.collector.CollectUntil(count)
+	durMs := time.Since(start).Milliseconds()
+
+	var sourceNames []string
+	for _, res := range results {
+		sourceNames = append(sourceNames, res.Source)
+	}
+
+	status := "success"
+	var errStr string
+	if len(errs) > 0 {
+		if len(results) == 0 {
+			status = "collect_failed"
+		} else {
+			status = "partial"
+		}
+		var msgs []string
+		for _, e := range errs {
+			msgs = append(msgs, e.Error())
+		}
+		errStr = strings.Join(msgs, "; ")
+	}
+
+	a.logger.Write(logger.LogEntry{
+		Type:    "collection",
+		Sources: sourceNames,
+		Count:   count,
+		DurMs:   durMs,
+		Status:  status,
+		Error:   errStr,
+	})
 
 	result := map[string]interface{}{
 		"sources": len(results),
